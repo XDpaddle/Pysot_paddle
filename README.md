@@ -37,5 +37,8 @@ export PYTHONPATH=/path/to/pysot:$PYTHONPATH
 ### Train
 运行train_single.py。cfg参数为训练配置文件。
 
-## 详细信息见：
-https://github.com/STVIR/pysot
+## 参考：
+本项目代码参考自：https://github.com/STVIR/pysot
+SiamRPN paperwithcode：https://paperswithcode.com/paper/high-performance-visual-tracking-with-siamese
+SiamRPN++ paperwithcode：https://paperswithcode.com/paper/siamrpn-evolution-of-siamese-visual-tracking
+SiamMask paperwithcode：https://paperswithcode.com/paper/siammask-a-framework-for-fast-online-object
