@@ -37,8 +37,15 @@ export PYTHONPATH=/path/to/pysot:$PYTHONPATH
 ### Train
 运行train_single.py。cfg参数为训练配置文件。
 
+###权重文件
+权重文件可以从百度云中下载：https://pan.baidu.com/s/1pqINENWrYLcGZog5PV4NCw
+，提取码jfgu。可以将下载到的experiments文件夹替换掉工程文件中的文件夹，或在experiments各模型对应文件夹中寻找对应权重。
+
 ## 参考：
 本项目代码参考自：https://github.com/STVIR/pysot
+
 SiamRPN paperwithcode：https://paperswithcode.com/paper/high-performance-visual-tracking-with-siamese
+
 SiamRPN++ paperwithcode：https://paperswithcode.com/paper/siamrpn-evolution-of-siamese-visual-tracking
+
 SiamMask paperwithcode：https://paperswithcode.com/paper/siammask-a-framework-for-fast-online-object
