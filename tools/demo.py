@@ -14,6 +14,7 @@ from glob import glob
 
 from pysot.core.config import cfg
 from pysot.models.model_builder import ModelBuilder  # 解除注释
+from pysot.models_car.model_builder import ModelBuilder as ModelBuilder_car
 from pysot.tracker.tracker_builder import build_tracker
 
 
@@ -25,9 +26,15 @@ parser = argparse.ArgumentParser(description='tracking demo')
 # parser.add_argument('--snapshot', type=str, help='model name')
 # parser.add_argument('--video_name', default='', type=str,
 #                     help='videos or image files')
-parser.add_argument('--config', type=str, help='config file', default='experiments/siamrpn_r50_l234_dwxcorr/config.yaml')
-parser.add_argument('--snapshot', type=str, help='model name', default='experiments/siamrpn_r50_l234_dwxcorr/model.pth')
-parser.add_argument('--video_name', default='demo/bag.avi', type=str,
+# parser.add_argument('--config', type=str, help='config file', default='experiments\\siamrpn_r50_l234_dwxcorr\\config.yaml')
+# parser.add_argument('--snapshot', type=str, help='model name', default='experiments\\siamrpn_r50_l234_dwxcorr\\trans_over.pdparams')
+parser.add_argument('--config', default='experiments\\siamcar_r50\\config.yaml', type=str,
+        help='config file')
+parser.add_argument('--snapshot', default='experiments\\siamcar_r50\\trans_over.pdparams', type=str,
+        help='snapshot of models to eval')
+# parser.add_argument('--video_name', default='demo/bag.avi', type=str,
+#                     help='videos or image files')
+parser.add_argument('--video_name', default='demo/output.mp4', type=str,
                     help='videos or image files')
 args = parser.parse_args()
 
@@ -69,12 +76,26 @@ def main():
     device = paddle.device.set_device('gpu' if cfg.CUDA else 'cpu')
 
     # create model
-    model = ModelBuilder()
+    # model = ModelBuilder()
+    if cfg.TRACK.TYPE == 'SiamCARTracker':
+        model = ModelBuilder_car()
+    else:
+        model = ModelBuilder()
+
+
+    # paddle.save(model.state_dict(), 'experiments\\siammask_r50_l3\\test.pdparams')  # 测试
 
     # load model
-    model.load_state_dict(torch.load(args.snapshot,
-        map_location=lambda storage, loc: storage.cpu()))
-    model.eval().to(device)
+    # model.load_state_dict(torch.load(args.snapshot,
+    #     map_location=lambda storage, loc: storage.cpu()))
+    # model.eval().to(device)
+    ckpt = paddle.load(args.snapshot)
+    model.set_state_dict(ckpt)
+
+    model.eval()
+    if cfg.TRACK.TYPE == 'SiamCARTracker':
+        params = getattr(cfg.HP_SEARCH ,'OTB100')
+    hp = {'lr': params[0], 'penalty_k':params[1], 'window_lr':params[2]}
 
     # build tracker
     tracker = build_tracker(model)
@@ -85,16 +106,26 @@ def main():
     else:
         video_name = 'webcam'
     cv2.namedWindow(video_name, cv2.WND_PROP_FULLSCREEN)
+    i = 0
     for frame in get_frames(args.video_name):
+        i = i + 1
         if first_frame:
             try:
+                fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', '2')
+                fps = 24
+                width = frame.shape[1]
+                height = frame.shape[0]
+                outVideo = cv2.VideoWriter('save_test_video.gif', fourcc, fps, (width, height))
                 init_rect = cv2.selectROI(video_name, frame, False, False)
             except:
                 exit()
             tracker.init(frame, init_rect)
             first_frame = False
         else:
-            outputs = tracker.track(frame)
+            if cfg.TRACK.TYPE == 'SiamCARTracker':
+                outputs = tracker.track(frame, hp)
+            else:
+                outputs = tracker.track(frame)
             if 'polygon' in outputs:
                 polygon = np.array(outputs['polygon']).astype(np.int32)
                 cv2.polylines(frame, [polygon.reshape((-1, 1, 2))],
@@ -108,6 +139,7 @@ def main():
                 cv2.rectangle(frame, (bbox[0], bbox[1]),
                               (bbox[0]+bbox[2], bbox[1]+bbox[3]),
                               (0, 255, 0), 3)
+            outVideo.write(frame)
             cv2.imshow(video_name, frame)
             cv2.waitKey(40)
 

@@ -12,6 +12,7 @@ import cv2
 # import torch
 import numpy as np
 
+import paddle
 # 测试 region库可用
 # from toolkit.utils.region import vot_overlap, vot_float2str  # 删  
 # pred_bbox = [129.35431623013224, 468.7058085835856, 23.872228564592074, 62.473706853214466]
@@ -21,40 +22,68 @@ import numpy as np
 
 from pysot.core.config import cfg
 from pysot.models.model_builder import ModelBuilder
+from pysot.models_car.model_builder import ModelBuilder as ModelBuilder_car
+
 from pysot.tracker.tracker_builder import build_tracker
 from pysot.utils.bbox import get_axis_aligned_bbox
 from pysot.utils.model_load import load_pretrain
 from toolkit.datasets import DatasetFactory
-from toolkit.utils.region import vot_overlap, vot_float2str
+
+
+# from toolkit.utils.region import vot_overlap, vot_float2str
+
+
 # export PYTHONPATH=/home/keyuze/Project/PADDLE/pysot-master-paddle/pysot:$PYTHONPATH
 
 parser = argparse.ArgumentParser(description='siamrpn tracking')
-parser.add_argument('--dataset', type=str,
+parser.add_argument('--dataset', default='OTB100', type=str,
         help='datasets')
-parser.add_argument('--config', default='', type=str,
+# parser.add_argument('--config', default='experiments\\siamrpn_r50_l234_dwxcorr_otb\\config.yaml', type=str,
+#         help='config file')
+# parser.add_argument('--snapshot', default='experiments\\siamrpn_r50_l234_dwxcorr_otb\\trans_over.pdparams', type=str,
+#         help='snapshot of models to eval')
+parser.add_argument('--config', default='experiments\\siamcar_r50\\config.yaml', type=str,
         help='config file')
-parser.add_argument('--snapshot', default='', type=str,
+parser.add_argument('--snapshot', default='experiments\\siamcar_r50\\trans_over.pdparams', type=str,
         help='snapshot of models to eval')
 parser.add_argument('--video', default='', type=str,
         help='eval one special video')
-parser.add_argument('--vis', action='store_true',
+parser.add_argument('--vis', action='store_true',  # 触发时为true
         help='whether visualzie result')
 args = parser.parse_args()
 
-torch.set_num_threads(1)
+# torch.set_num_threads(1)
 
 def main():
     # load config
     cfg.merge_from_file(args.config)
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
+    # dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
+    # dataset_root = os.path.join(cur_dir, '..\\testing_dataset', args.dataset)
+    dataset_root = os.path.join(cur_dir, 'testing_dataset', args.dataset)
+
+    params = getattr(cfg.HP_SEARCH ,args.dataset)
+    hp = {'lr': params[0], 'penalty_k':params[1], 'window_lr':params[2]}
 
     # create model
-    model = ModelBuilder()
+    # if cfg.RPN:
+    #     model = ModelBuilder()
+    # elif cfg.TRACK.TYPE == 'SiamCARTracker':
+    #     model = ModelBuilder_car()
+    if cfg.TRACK.TYPE == 'SiamCARTracker':
+        model = ModelBuilder_car()
+    else:
+        model = ModelBuilder()
 
     # load model
-    model = load_pretrain(model, args.snapshot).cuda().eval()
+    # model = load_pretrain(model, args.snapshot).cuda().eval()
+        
+    # paddle.save(model.state_dict(), 'D:\\deeplearning\\pysot\\pysot-master-paddle\\experiments\\siamcar_r50\\model.pdparams')
+    ckpt = paddle.load(args.snapshot)
+    # ckpt = paddle.load(args.snapshot)
+    model.set_state_dict(ckpt)
+    model.eval()
 
     # build tracker
     tracker = build_tracker(model)
@@ -63,8 +92,17 @@ def main():
     dataset = DatasetFactory.create_dataset(name=args.dataset,
                                             dataset_root=dataset_root,
                                             load_img=False)
+    
 
-    model_name = args.snapshot.split('/')[-1].split('.')[0]
+
+    params = getattr(cfg.HP_SEARCH ,args.dataset)
+    hp = {'lr': params[0], 'penalty_k':params[1], 'window_lr':params[2]}
+    if cfg.TRACK.TYPE == 'SiamCARTracker':
+        model_name = args.snapshot.split('/')[-1] + str(hp['lr']) + '_' + str(hp['penalty_k']) + '_' + str(hp['window_lr'])
+    else:
+        model_name = args.snapshot.split('/')[-1].split('.')[0]
+
+    # model_name = args.snapshot.split('\\')[-1].split('.')[0]  # split根据特定字符切分字符串
     total_lost = 0
     if args.dataset in ['VOT2016', 'VOT2018', 'VOT2019']:
         # restart tracking
@@ -157,19 +195,25 @@ def main():
                     cx, cy, w, h = get_axis_aligned_bbox(np.array(gt_bbox))
                     gt_bbox_ = [cx-(w-1)/2, cy-(h-1)/2, w, h]
                     tracker.init(img, gt_bbox_)
-                    pred_bbox = gt_bbox_
+                    pred_bbox = gt_bbox_  # gt: groundtruth
                     scores.append(None)
                     if 'VOT2018-LT' == args.dataset:
                         pred_bboxes.append([1])
                     else:
                         pred_bboxes.append(pred_bbox)
                 else:
-                    outputs = tracker.track(img)
+                    if cfg.TRACK.TYPE == 'SiamCARTracker':
+                        outputs = tracker.track(img, hp)  # 经过网络
+                    else:
+                        outputs = tracker.track(img)
                     pred_bbox = outputs['bbox']
                     pred_bboxes.append(pred_bbox)
-                    scores.append(outputs['best_score'])
-                toc += cv2.getTickCount() - tic
-                track_times.append((cv2.getTickCount() - tic)/cv2.getTickFrequency())
+                    if cfg.TRACK.TYPE == 'SiamCARTracker':
+                        scores.append(1.0)
+                    else:
+                        scores.append(outputs['best_score'])
+                toc += cv2.getTickCount() - tic  # 返回计时周期数
+                track_times.append((cv2.getTickCount() - tic)/cv2.getTickFrequency())  # cv2.getTickFrequency() 计时周期频率
                 if idx == 0:
                     cv2.destroyAllWindows()
                 if args.vis and idx > 0:

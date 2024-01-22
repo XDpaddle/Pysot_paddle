@@ -15,13 +15,13 @@ from toolkit.evaluation import OPEBenchmark, AccuracyRobustnessBenchmark, \
         EAOBenchmark, F1Benchmark
 
 parser = argparse.ArgumentParser(description='tracking evaluation')
-parser.add_argument('--tracker_path', '-p', type=str,
+parser.add_argument('--tracker_path', '-p', default='results', type=str,
                     help='tracker result path')
-parser.add_argument('--dataset', '-d', type=str,
+parser.add_argument('--dataset', '-d', default='OTB100', type=str,
                     help='dataset name')
 parser.add_argument('--num', '-n', default=1, type=int,
                     help='number of thread to eval')
-parser.add_argument('--tracker_prefix', '-t', default='',
+parser.add_argument('--tracker_prefix', '-t', default='experiments\\siamrpn_r50_l234_dwxcorr\\trans_over',
                     type=str, help='tracker name')
 parser.add_argument('--show_video_level', '-s', dest='show_video_level',
                     action='store_true')
@@ -31,22 +31,27 @@ args = parser.parse_args()
 
 def main():
     tracker_dir = os.path.join(args.tracker_path, args.dataset)
-    trackers = glob(os.path.join(args.tracker_path,
-                                 args.dataset,
-                                 args.tracker_prefix+'*'))
-    trackers = [os.path.basename(x) for x in trackers]
+    # trackers = glob(os.path.join(args.tracker_path,
+    #                              args.dataset,
+    #                              args.tracker_prefix+'*'))
+    # trackers = [os.path.basename(x) for x in trackers]
+    trackers = [args.tracker_prefix]
 
     assert len(trackers) > 0
     args.num = min(args.num, len(trackers))
 
+    # root = os.path.realpath(os.path.join(os.path.dirname(__file__),
+    #                         '../testing_dataset'))
     root = os.path.realpath(os.path.join(os.path.dirname(__file__),
-                            '../testing_dataset'))
+                            './testing_dataset'))
     root = os.path.join(root, args.dataset)
     if 'OTB' in args.dataset:
         dataset = OTBDataset(args.dataset, root)
         dataset.set_tracker(tracker_dir, trackers)
         benchmark = OPEBenchmark(dataset)
         success_ret = {}
+        # benchmark.eval_success(trackers)
+
         with Pool(processes=args.num) as pool:
             for ret in tqdm(pool.imap_unordered(benchmark.eval_success,
                 trackers), desc='eval success', total=len(trackers), ncols=100):
