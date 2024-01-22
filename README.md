@@ -35,11 +35,11 @@ export PYTHONPATH=/path/to/pysot:$PYTHONPATH
 运行eval.py。对test标定结果进行验证。tracker_path，跟踪器标定结果路径，dataset，测试集名称。num，进行eval的进程数tracker_prefix，存储标定结果的文件夹名称（路径），总路径为results/dataset/tracker_prefix。show_video_level显示每个视频测试结果。
 
 ### Train
-运行train_single.py。cfg参数为训练配置文件。
+运行train.py。cfg参数为训练配置文件。
 
 ###权重文件
-权重文件可以从百度云中下载：https://pan.baidu.com/s/1pqINENWrYLcGZog5PV4NCw
-，提取码jfgu。可以将下载到的experiments文件夹替换掉工程文件中的文件夹，或在experiments各模型对应文件夹中寻找对应权重。
+权重文件可以从百度云中下载：链接：https://pan.baidu.com/s/1qHa_1P03vM5cSVZO5DZeoQ 
+提取码：pypd。可以将下载到的experiments文件夹替换掉工程文件中的文件夹，或在experiments各模型对应文件夹中寻找对应权重。
 
 ## 参考：
 本项目代码参考自：https://github.com/STVIR/pysot
