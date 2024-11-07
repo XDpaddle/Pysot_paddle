@@ -2,7 +2,7 @@
 
 **PySOT** 是由SenseTime视频智能研究团队设计的软件系统，包含 [SiamRPN](http://openaccess.thecvf.com/content_cvpr_2018/html/Li_High_Performance_Visual_CVPR_2018_paper.html) 与 [SiamMask](https://arxiv.org/abs/1812.05050)。 
 
-PySOT支持以下项目: [SiamRPN](http://openaccess.thecvf.com/content_cvpr_2018/html/Li_High_Performance_Visual_CVPR_2018_paper.html), [DaSiamRPN](https://arxiv.org/abs/1808.06048), [SiamRPN++](https://arxiv.org/abs/1812.11703), 和 [SiamMask](https://arxiv.org/abs/1812.05050).
+PySOT支持以下项目: [SiamRPN](http://openaccess.thecvf.com/content_cvpr_2018/html/Li_High_Performance_Visual_CVPR_2018_paper.html), [DaSiamRPN](https://arxiv.org/abs/1808.06048), [SiamRPN++](https://arxiv.org/abs/1812.11703), 和 [SiamMask](https://arxiv.org/abs/1812.05050), 并新增了SiamCAR基于遥感数据集微调的模型与SiamNCA.
 
 <div align="center">
   <img src="demo/output/bag_demo.gif" width="800px" />
@@ -37,9 +37,8 @@ export PYTHONPATH=/path/to/pysot:$PYTHONPATH
 ### Train
 运行train.py。cfg参数为训练配置文件。
 
-###权重文件
-权重文件可以从百度云中下载：链接：https://pan.baidu.com/s/1qHa_1P03vM5cSVZO5DZeoQ 
-提取码：pypd。可以将下载到的experiments文件夹替换掉工程文件中的文件夹，或在experiments各模型对应文件夹中寻找对应权重。
+### 权重文件 
+权重文件可以从百度云中下载：链接：https://pan.baidu.com/s/1qHa_1P03vM5cSVZO5DZeoQ 提取码：pypd。可以将下载到的experiments文件夹替换掉工程文件中的文件夹，或在experiments各模型对应文件夹中寻找对应权重。
 
 ## 参考：
 本项目代码参考自：https://github.com/STVIR/pysot
@@ -49,3 +48,9 @@ SiamRPN paperwithcode：https://paperswithcode.com/paper/high-performance-visual
 SiamRPN++ paperwithcode：https://paperswithcode.com/paper/siamrpn-evolution-of-siamese-visual-tracking
 
 SiamMask paperwithcode：https://paperswithcode.com/paper/siammask-a-framework-for-fast-online-object
+
+SiamCAR paperwithcode：https://paperswithcode.com/paper/siamcar-siamese-fully-convolutional
+
+SiamNCA：https://www.sciencedirect.com/science/article/abs/pii/S0950705122008437
+
+
